@@ -2,10 +2,7 @@
 #define MNEMONICS_H
 #include <stddef.h>
 
-/* push constant:
- *  %d -> integer literal to push onto the stack
- */
-static const char *pushConstant[] = {
+static const char* pushConstant[] = {
     "@%d",
     "D=A",
     "@SP",
@@ -13,13 +10,10 @@ static const char *pushConstant[] = {
     "M=D",
     "@SP",
     "M=M+1",
-    NULL};
+    NULL
+};
 
-/* push segment (local/argument/this/that):
- *  %d -> offset/index into the segment
- *  %s -> segment symbol (LCL, ARG, THIS, THAT)
- */
-static const char *pushSegment[] = {
+static const char* pushSegment[] = {
     "@%d",
     "D=A",
     "@%s",
@@ -30,13 +24,10 @@ static const char *pushSegment[] = {
     "M=D",
     "@SP",
     "M=M+1",
-    NULL};
+    NULL
+};
 
-/* push temp:
- *  %d -> offset into temp segment (0..7)
- *  temp base is R5 (address 5)
- */
-static const char *pushTemp[] = {
+static const char* pushTemp[] = {
     "@R5",
     "D=A",
     "@%d",
@@ -47,12 +38,10 @@ static const char *pushTemp[] = {
     "M=D",
     "@SP",
     "M=M+1",
-    NULL};
+    NULL
+};
 
-/* push pointer:
- *  %s -> pointer symbol ("THIS" or "THAT")
- */
-static const char *pushPointer[] = {
+static const char* pushPointer[] = {
     "@%s",
     "D=M",
     "@SP",
@@ -60,14 +49,10 @@ static const char *pushPointer[] = {
     "M=D",
     "@SP",
     "M=M+1",
-    NULL};
+    NULL
+};
 
-/* push static:
- *  %s -> file/namespace for static variables
- *  %d -> static index
- *  expands to @<filename>.<index>
- */
-static const char *pushStatic[] = {
+static const char* pushStatic[] = {
     "@%s.%d",
     "D=M",
     "@SP",
@@ -75,13 +60,10 @@ static const char *pushStatic[] = {
     "M=D",
     "@SP",
     "M=M+1",
-    NULL};
+    NULL
+};
 
-/* pop segment (local/argument/this/that):
- *  %s -> segment symbol (LCL, ARG, THIS, THAT)
- *  %d -> offset/index into the segment
- */
-static const char *popSegment[] = {
+static const char* popSegment[] = {
     "@%s",
     "D=M",
     "@%d",
@@ -95,12 +77,10 @@ static const char *popSegment[] = {
     "@R13",
     "A=M",
     "M=D",
-    NULL};
+    NULL
+};
 
-/* pop temp:
- *  %d -> offset into temp segment (0..7)
- */
-static const char *popTemp[] = {
+static const char* popTemp[] = {
     "@R5",
     "D=A",
     "@%d",
@@ -113,126 +93,144 @@ static const char *popTemp[] = {
     "@R13",
     "A=M",
     "M=D",
-    NULL};
+    NULL
+};
 
-/* pop pointer:
- *  %s -> pointer symbol ("THIS" or "THAT") where the popped value will be stored
- */
-static const char *popPointer[] = {
+static const char* popPointer[] = {
     "@SP",
     "M=M-1",
     "A=M",
     "D=M",
     "@%s",
     "M=D",
-    NULL};
+    NULL
+};
 
-/* pop static:
- *  %s -> file/namespace for static variables
- *  %d -> static index
- *  stores top-of-stack into @<filename>.<index>
- */
-static const char *popStatic[] = {
+static const char* popStatic[] = {
     "@SP",
     "M=M-1",
     "A=M",
     "D=M",
     "@%s.%d",
     "M=D",
-    NULL};
+    NULL
+};
 
-/* binary operation:
- *  %s -> infix operator inserted between operands (e.g. "+", "-", "&", "|")
- *  produces D=M%sD (e.g. D=M+D, D=M-D)
- */
-static const char *binaryOp[] = {
+static const char* binaryOp[] = {
     "@SP",
     "AM=M-1",
     "D=M",
     "@SP",
     "AM=M-1",
-    "D=M%sD",
+    "D=%s",
     "M=D",
     "@SP",
     "M=M+1",
-    NULL};
+    NULL
+};
 
-/* unary operation:
- *  %s -> unary operator applied to memory cell ("-" for neg, "!" for not)
- *  forms M=%sM (e.g. M=-M)
- */
-static const char *unaryOp[] = {
+static const char* unaryOp[] = {
     "@SP",
     "AM=M-1",
     "M=%sM",
     "@SP",
     "M=M+1",
-    NULL};
+    NULL
+};
 
-/* compare operation:
- *  %d -> unique id to avoid label collisions (used in IF_TRUE.%d, END.%d)
- *  %s -> jump condition mnemonic (JEQ, JGT, JLT)
- *  emits branching code that pushes -1 for true and 0 for false
- */
-static const char *compareOp[] = {
+static const char* compareOp[] = {
     "@SP",
     "AM=M-1",
     "D=M",
     "@SP",
     "AM=M-1",
     "D=M-D",
-    "@IF_TRUE.%d",
+    "@__VM$CMP_TRUE.%d",
     "D;%s",
     "D=0",
     "@SP",
     "A=M",
     "M=D",
-    "@END.%d",
+    "@__VM$CMP_END.%d",
     "0;JMP",
-    "(IF_TRUE.%d)",
+    "(__VM$CMP_TRUE.%d)",
     "D=-1",
     "@SP",
     "A=M",
     "M=D",
-    "(END.%d)",
+    "(__VM$CMP_END.%d)",
     "@SP",
     "M=M+1",
-    NULL};
+    NULL
+};
 
-/* label declaration:
- *  %s -> label name to declare
- */
-static const char *label[] = {
-    "(%s)",
-    NULL};
-
-/* unconditional goto:
- *  %s -> destination label name
- */
-static const char *VMgoto[] = {
-    "@%s",
+static const char* compareSigned[] = {
+    "@SP",
+    "AM=M-1",
+    "D=M",
+    "@R13",
+    "M=D",
+    "@SP",
+    "A=M-1",
+    "D=M",
+    "@__VM$CMP_XNEG.%d",
+    "D;JLT",
+    "@R13",
+    "D=M",
+    "@__VM$CMP_%s.%d",
+    "D;JLT",
+    "@__VM$CMP_SAME.%d",
     "0;JMP",
-    NULL};
+    "(__VM$CMP_XNEG.%d)",
+    "@R13",
+    "D=M",
+    "@__VM$CMP_%s.%d",
+    "D;JGE",
+    "(__VM$CMP_SAME.%d)",
+    "@SP",
+    "A=M-1",
+    "D=M",
+    "@R13",
+    "D=D-M",
+    "@__VM$CMP_TRUE.%d",
+    "D;%s",
+    "(__VM$CMP_FALSE.%d)",
+    "@SP",
+    "A=M-1",
+    "M=0",
+    "@__VM$CMP_END.%d",
+    "0;JMP",
+    "(__VM$CMP_TRUE.%d)",
+    "@SP",
+    "A=M-1",
+    "M=-1",
+    "(__VM$CMP_END.%d)",
+    NULL
+};
 
-/* if-goto:
- *  %s -> destination label to jump to if top-of-stack != 0
- */
-static const char *if_goto[] = {
+static const char* label[] = {
+    "(%s$%s)",
+    NULL
+};
+
+static const char* vmGoto[] = {
+    "@%s$%s",
+    "0;JMP",
+    NULL
+};
+
+static const char* ifGoto[] = {
     "@SP",
     "M=M-1",
     "A=M",
     "D=M",
-    "@%s",
+    "@%s$%s",
     "D;JNE",
-    NULL};
+    NULL
+};
 
-/* call sequence:
- *  %s -> function name used as namespace for return label
- *  %d -> unique return id
- *  also uses %s.%s in the jump target representing <class>.<function>
- */
-static const char *call[] = {
-    "@%s$ret.%d",
+static const char* call[] = {
+    "@__VM$RET.%d",
     "D=A",
     "@SP",
     "A=M",
@@ -279,22 +277,18 @@ static const char *call[] = {
     "D=M",
     "@LCL",
     "M=D",
-    "@%s.%s",
+    "@%s",
     "0;JMP",
-    "(%s$ret.%d)",
-    NULL};
+    "(__VM$RET.%d)",
+    NULL
+};
 
-/* function declaration / local initialization:
- *  %s.%s -> namespace-qualified function label (e.g. <class>.<function>)
- *  %d -> number of local variables to initialize to 0
- *  repeated %s.%s placeholders are used to name loop and exit labels
- */
-static const char *function[] = {
-    "(%s.%s)",
+static const char* function[] = {
+    "(%s)",
     "@%d",
     "D=A",
-    "(%s.%s$LOOP)",
-    "@%s.%s$EXIT",
+    "(__VM$LOCAL_LOOP.%d)",
+    "@__VM$LOCAL_END.%d",
     "D;JEQ",
     "@SP",
     "A=M",
@@ -302,12 +296,13 @@ static const char *function[] = {
     "@SP",
     "M=M+1",
     "D=D-1",
-    "@%s.%s$LOOP",
+    "@__VM$LOCAL_LOOP.%d",
     "0;JMP",
-    "(%s.%s$EXIT)",
-    NULL};
+    "(__VM$LOCAL_END.%d)",
+    NULL
+};
 
-static const char *VMreturn[] = {
+static const char* vmReturn[] = {
     "@LCL",
     "D=M",
     "@R13",
@@ -351,6 +346,7 @@ static const char *VMreturn[] = {
     "@R14",
     "A=M",
     "0;JMP",
-    NULL};
+    NULL
+};
 
 #endif

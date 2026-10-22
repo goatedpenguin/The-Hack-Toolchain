@@ -33,7 +33,7 @@ typedef enum {
 } builtins;
 
 typedef enum {
-    C_INVALID,   
+    C_INVALID,
     C_ARITHMETIC,
     C_BRANCH,
     C_PUSH,

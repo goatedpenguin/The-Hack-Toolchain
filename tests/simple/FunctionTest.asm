@@ -1,8 +1,8 @@
 (Simple.test)
 @2
 D=A
-(Simple.test$LOOP)
-@Simple.test$EXIT
+(__VM$LOCAL_LOOP.0)
+@__VM$LOCAL_END.0
 D;JEQ
 @SP
 A=M
@@ -10,9 +10,9 @@ M=0
 @SP
 M=M+1
 D=D-1
-@Simple.test$LOOP
+@__VM$LOCAL_LOOP.0
 0;JMP
-(Simple.test$EXIT)
+(__VM$LOCAL_END.0)
 @0
 D=A
 @SP

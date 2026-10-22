@@ -1,0 +1,50 @@
+push constant 32767
+push constant 1
+neg
+gt
+push constant 32767
+push constant 1
+add
+push constant 1
+lt
+push constant 32767
+push constant 1
+add
+push constant 32767
+gt
+push constant 32767
+push constant 32767
+push constant 1
+add
+lt
+push constant 32767
+push constant 1
+add
+push constant 32767
+push constant 1
+add
+eq
+push constant 1
+neg
+push constant 0
+lt
+push constant 0
+push constant 1
+neg
+gt
+push constant 32767
+push constant 1
+add
+push constant 32767
+neg
+lt
+push constant 32767
+push constant 32766
+gt
+push constant 32767
+push constant 32767
+push constant 1
+add
+eq
+label END
+goto END

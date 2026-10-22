@@ -1,4 +1,4 @@
-@Simple.test$ret.0
+@__VM$RET.0
 D=A
 @SP
 A=M
@@ -47,4 +47,4 @@ D=M
 M=D
 @Simple.test
 0;JMP
-(Simple.test$ret.0)
+(__VM$RET.0)

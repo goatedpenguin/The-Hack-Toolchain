@@ -1,95 +1,104 @@
-#define _BSD_SOURCE 1
+#define _POSIX_C_SOURCE 200809L
 #include "InputManager.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
-
-static char* cleanNamePathAndExtension(const char* name) {
-    char* cleanedFileName = strdup(name);
-    char* slash = strrchr(cleanedFileName, '/');
-    cleanedFileName = slash + 1; 
-    *(cleanedFileName + strlen(cleanedFileName) - 3) = '\0';
-    return cleanedFileName;
+static int hasVMExtension(const char* name) {
+    size_t len = strlen(name);
+    return len > 3 && strcmp(name + len - 3, ".vm") == 0;
 }
 
-// assumes that path input is perfect
+void freeInputSet(VMInputSet* set) {
+    if (!set) return;
+    for (int i = 0; i < set->numFiles; i++) {
+        fclose(set->fpArray[i].fp);
+        free(set->fpArray[i].fileName);
+    }
+    free(set->fpArray);
+    free(set);
+}
+
+static int openVMFile(VMInputSet* set, const char* path, const char* name) {
+    FILE* fp = fopen(path, "r");
+    if (!fp) {
+        perror(path);
+        return 0;
+    }
+    set->fpArray = realloc(set->fpArray, (set->numFiles + 1) * sizeof(VMFile));
+    VMFile* file = &set->fpArray[set->numFiles++];
+    file->fp = fp;
+    file->fileName = strdup(name);
+    file->fileName[strlen(name) - 3] = '\0';
+    return 1;
+}
+
+static int compareFiles(const void* a, const void* b) {
+    const VMFile* left = a;
+    const VMFile* right = b;
+    return strcmp(left->fileName, right->fileName);
+}
+
 VMInputSet* manageFiles(const char* path) {
-    struct stat s;
-    if (stat(path, &s) != 0) {
-        perror("stat");
-        exit(EXIT_FAILURE);
+    struct stat st;
+    if (stat(path, &st) != 0) {
+        perror(path);
+        return NULL;
     }
-
-    VMInputSet* set = (VMInputSet *) malloc(sizeof(VMInputSet));
-    
-    if (S_ISREG(s.st_mode)) {
-        set->fpArray = (VMFile *) malloc(sizeof(VMFile));
-        char* cleanedFileName = cleanNamePathAndExtension(path);
-        set->fpArray->fileName = cleanedFileName;
-        set->fpArray->fp = fopen(path, "r");
-        set->numFiles = 1;
-        return set;
-    } else if (S_ISDIR(s.st_mode)) {
-        DIR* dir = opendir(path); 
-        struct dirent* d;
-        struct stat s;
-        int vmFiles = 0;
-        int i = 0;
-        char* pathWithFileName;
-        while ((d = readdir(dir)) != NULL) {
-            pathWithFileName = (char *) malloc(strlen(path) + strlen(d->d_name) + 2);
-            sprintf(pathWithFileName, "%s/%s", path, d->d_name);
-            if (stat(pathWithFileName, &s) == 0) {
-                if (S_ISREG(s.st_mode)) {
-                    char* extensionCmp = strrchr(d->d_name, '.'); 
-                    if (!extensionCmp) {   
-                        free(pathWithFileName);
-                        continue;
-                    }
-                    if (strcmp(extensionCmp, ".vm") == 0) {
-                        vmFiles++;
-                    }
-                }
-            }
-            else {
-                perror("stat");
-            }
-            free(pathWithFileName);
+    VMInputSet* set = calloc(1, sizeof(VMInputSet));
+    if (S_ISREG(st.st_mode)) {
+        const char* base = strrchr(path, '/');
+        base = base ? base + 1 : path;
+        if (!hasVMExtension(base)) {
+            fprintf(stderr, "expected a .vm file: %s\n", path);
+            freeInputSet(set);
+            return NULL;
         }
-
-        set->numFiles = vmFiles;
-        set->fpArray = (VMFile *) malloc(vmFiles * sizeof(VMFile));
-        rewinddir(dir);
-        while ((d = readdir(dir)) != NULL) {
-            pathWithFileName = (char *) malloc(strlen(path) + strlen(d->d_name) + 2);
-            sprintf(pathWithFileName, "%s/%s", path, d->d_name);
-            if (stat(pathWithFileName, &s) == 0) {
-                if (S_ISREG(s.st_mode)) {
-                    char* extensionCmp = strrchr(d->d_name, '.'); 
-                    if (!extensionCmp) {   
-                        free(pathWithFileName);
-                        continue;
-                    }
-                    if (strcmp(extensionCmp, ".vm") == 0) {
-                        set->fpArray[i].fileName = d->d_name;
-                        set->fpArray[i].fp = fopen(pathWithFileName, "r");
-                        i++;
-                    }
-                }
-            }
-            else {
-                perror("stat");
-            }
-            free(pathWithFileName);
-        } 
+        if (!openVMFile(set, path, base)) {
+            freeInputSet(set);
+            return NULL;
+        }
         return set;
     }
-    else {
-        exit(EXIT_FAILURE);
+    if (!S_ISDIR(st.st_mode)) {
+        fprintf(stderr, "expected a file or directory: %s\n", path);
+        freeInputSet(set);
+        return NULL;
     }
+
+    DIR* dir = opendir(path);
+    if (!dir) {
+        perror(path);
+        freeInputSet(set);
+        return NULL;
+    }
+    struct dirent* d;
+    while ((d = readdir(dir)) != NULL) {
+        if (!hasVMExtension(d->d_name)) continue;
+        char* filePath = malloc(strlen(path) + strlen(d->d_name) + 2);
+        sprintf(filePath, "%s/%s", path, d->d_name);
+        if (stat(filePath, &st) != 0) {
+            perror(filePath);
+            free(filePath);
+            closedir(dir);
+            freeInputSet(set);
+            return NULL;
+        }
+        if (S_ISREG(st.st_mode) && !openVMFile(set, filePath, d->d_name)) {
+            free(filePath);
+            closedir(dir);
+            freeInputSet(set);
+            return NULL;
+        }
+        free(filePath);
+    }
+    closedir(dir);
+    if (!set->numFiles) {
+        fprintf(stderr, "no .vm files in %s\n", path);
+        freeInputSet(set);
+        return NULL;
+    }
+    qsort(set->fpArray, set->numFiles, sizeof(VMFile), compareFiles);
+    return set;
 }

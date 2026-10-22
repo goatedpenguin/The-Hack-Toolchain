@@ -1,0 +1,19 @@
+function A.first 2
+label LOOP
+push local 0
+push local 1
+add
+push constant 7
+add
+return
+
+function A.part.second 0
+label LOOP
+call plain 0
+push constant 8
+add
+return
+
+function plain 0
+push constant 3
+return

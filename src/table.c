@@ -1,21 +1,33 @@
-#define _BSD_SOURCE 1
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
+#define _POSIX_C_SOURCE 200809L
 #include "table.h"
 #include "types.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 
 table* initTable() {
-    table* hashTable = (table *) malloc(sizeof(table));
-    hashTable->entries = (entry **) malloc(TABLE_SIZE * sizeof(entry *));
+    table* hashTable = (table*)malloc(sizeof(table));
+    hashTable->entries = (entry**)malloc(TABLE_SIZE * sizeof(entry*));
     for (int i = 0; i < TABLE_SIZE; i++) {
         hashTable->entries[i] = NULL;
     }
     return hashTable;
+}
+
+void freeTable(table* hashTable) {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        entry* cur = hashTable->entries[i];
+        while (cur) {
+            entry* next = cur->next;
+            free(cur->key);
+            free(cur->val);
+            free(cur);
+            cur = next;
+        }
+    }
+    free(hashTable->entries);
+    free(hashTable);
 }
 
 static uint32_t hash(const char* key) {
@@ -32,11 +44,11 @@ static uint32_t hash(const char* key) {
     hash += (hash << 15);
 
     return hash;
-} 
+}
 
 static void addCommand(table* hashTable, const char* key, vmWord* val) {
     int idx = hash(key) % TABLE_SIZE;
-    entry* new = (entry *) malloc(sizeof(entry));
+    entry* new = (entry*)malloc(sizeof(entry));
     new->next = hashTable->entries[idx];
     hashTable->entries[idx] = new;
     new->key = strdup(key);
@@ -56,35 +68,35 @@ vmWord* getCommand(table* hashTable, const char* key) {
 }
 
 static vmWord* createSegment(memorySegments seg) {
-    vmWord* word = (vmWord *) malloc(sizeof(vmWord));
+    vmWord* word = (vmWord*)malloc(sizeof(vmWord));
     word->tag = SEGMENT;
     word->vmCommandType.segment = seg;
     return word;
 }
 
 static vmWord* createBuiltin(builtins b) {
-    vmWord* word = (vmWord *) malloc(sizeof(vmWord));
+    vmWord* word = (vmWord*)malloc(sizeof(vmWord));
     word->tag = BUILTIN;
     word->vmCommandType.builtin = b;
     return word;
 }
 
 static vmWord* createMemoryCmd(VMCommands cmd) {
-    vmWord* word = (vmWord *) malloc(sizeof(vmWord));
+    vmWord* word = (vmWord*)malloc(sizeof(vmWord));
     word->tag = MEMORY_CMD;
     word->vmCommandType.command = cmd;
     return word;
 }
 
 static vmWord* createFuncCmd(VMCommands cmd) {
-    vmWord* word = (vmWord *) malloc(sizeof(vmWord));
+    vmWord* word = (vmWord*)malloc(sizeof(vmWord));
     word->tag = FUNC_CMD;
     word->vmCommandType.command = cmd;
     return word;
 }
 
 static vmWord* createBranch(branch branchOperator) {
-    vmWord* word = (vmWord* ) malloc(sizeof(vmWord));
+    vmWord* word = (vmWord*)malloc(sizeof(vmWord));
     word->tag = BRANCH;
     word->vmCommandType.branchOperator = branchOperator;
     return word;
@@ -121,4 +133,3 @@ void buildVMTable(table* hashTable) {
     addCommand(hashTable, "pointer", createSegment(MEM_POINTER));
     addCommand(hashTable, "temp", createSegment(MEM_TEMP));
 }
-

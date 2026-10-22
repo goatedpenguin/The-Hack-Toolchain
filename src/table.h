@@ -30,5 +30,6 @@ typedef struct {
 table* initTable();
 vmWord* getCommand(table* hashTable, const char* key);
 void buildVMTable(table* hashTable);
+void freeTable(table* hashTable);
 
 #endif

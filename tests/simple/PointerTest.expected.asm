@@ -30,7 +30,7 @@ AM=M-1
 D=M
 @SP
 AM=M-1
-D=M+D
+D=D+M
 M=D
 @SP
 M=M+1

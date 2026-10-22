@@ -3,6 +3,8 @@
 #include "parser.h"
 #include "types.h"
 
-char *codeGen(VMPacket *vmPacket, const char *filename);
+char* codeGen(VMPacket* vmPacket, const char* fileName);
+void setCodegenFile(const char* fileName);
+char* bootstrapCode(void);
 
 #endif

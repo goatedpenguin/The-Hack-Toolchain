@@ -1,4 +1,4 @@
-(LOOP)
+(BranchTest$LOOP)
 @0
 D=A
 @SP
@@ -10,8 +10,8 @@ M=M+1
 M=M-1
 A=M
 D=M
-@LOOP
+@BranchTest$LOOP
 D;JNE
-@END
+@BranchTest$END
 0;JMP
-(END)
+(BranchTest$END)
