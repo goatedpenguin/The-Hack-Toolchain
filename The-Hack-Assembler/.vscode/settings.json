@@ -1,0 +1,47 @@
+{
+    // File associations for C headers
+    "files.associations": {
+        "mixer.h": "c",
+        "string.h": "c",
+        "parser.h": "c",
+        "stdio.h": "c",
+        "symbol_table.h": "c",
+        "stdlib.h": "c",
+        "stdint.h": "c",
+        "codegen.h": "c",
+        "assembler.h": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "atomic": "c",
+        "bit": "c",
+        "concepts": "c",
+        "cstddef": "c",
+        "cstdio": "c",
+        "cwchar": "c",
+        "deque": "c",
+        "vector": "c",
+        "functional": "c",
+        "memory": "c",
+        "memory_resource": "c",
+        "optional": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "random": "c",
+        "initializer_list": "c",
+        "new": "c",
+        "stdexcept": "c",
+        "system_error": "c",
+        "typeinfo": "c",
+        "bitvector.h": "c",
+        "socket.h": "c"
+    },
+    // Use project .clang-format file for coding style
+    "C_Cpp.clang_format_style": "file",
+    // Format automatically on save
+    "editor.formatOnSave": false,
+    "lldb.displayFormat": "auto",
+    "lldb.showDisassembly": "auto",
+    "lldb.dereferencePointers": true,
+    "lldb.consoleMode": "commands"
+}

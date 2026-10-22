@@ -1,0 +1,11 @@
+# Local backups and migration files
+/The-Hack-Toolchain.bak.dir/
+/.monorepo-preparation/
+# Local environment directories
+/.agents/
+/.aws/
+/.codex/
+# OS metadata and compiled executables
+.DS_Store
+/The-Hack-Assembler/assembler
+/The-Hack-VM/hackvm
